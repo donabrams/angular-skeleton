@@ -1,0 +1,29 @@
+{
+  "name": "simple-gantt",
+  "version": "0.0.0",
+  "description": "Simple Gantt chart generator with critical path and risk mulitpliers",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"No tests... yet",
+    "start": "node app.js",
+    "dev": "gulp"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.8.5"
+  },
+  "devDependencies": {
+    "bower": "^1.3.9",
+    "bower-files": "^1.5.0",
+    "gulp": "^3.8.7",
+    "gulp-coffee": "^2.1.2",
+    "gulp-concat": "^2.3.4",
+    "gulp-express": "donabrams/gulp-express",
+    "gulp-jade": "^0.7.0",
+    "gulp-stylus": "^1.3.0",
+    "gulp-util": "^3.0.0",
+    "nib": "^1.0.3",
+    "through2": "^0.6.1"
+  }
+}
