@@ -1,4 +1,4 @@
-app = angular.module 'simpleGantt', []
+app = angular.module 'myapp', []
 app.directive 'tester', () ->
   restrict: 'E'
   template: '<div>{{success}}</div>'
