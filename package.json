@@ -1,7 +1,7 @@
 {
-  "name": "simple-gantt",
+  "name": "TODO",
   "version": "0.0.0",
-  "description": "Simple Gantt chart generator with critical path and risk mulitpliers",
+  "description": "TODO",
   "main": "app.js",
   "scripts": {
     "test": "echo \"No tests... yet",
