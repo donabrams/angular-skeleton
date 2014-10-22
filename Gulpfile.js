@@ -1,14 +1,14 @@
 var gulp = require('gulp'),
     server = require('gulp-express'),
     util = require('gulp-util'),
-    through = require('through2'),
     jade = require('gulp-jade'),
     stylus = require('gulp-stylus'),
     nib = require('nib'),
     coffee = require('gulp-coffee'),
     bower = require('bower'),
     concat = require('gulp-concat'),
-    bower_files = require('bower-files');
+    bower_files = require('bower-files'),
+    jeet = require('jeet');
 
 var paths = {
     main: ['app.js'],
@@ -40,7 +40,7 @@ gulp.task('compile_html_templates', function () {
 
 gulp.task('compile_css_templates', function () {
     gulp.src(paths.css_templates)
-        .pipe(stylus({use: [nib()]})).on('error', util.log)
+        .pipe(stylus({use: [nib(), jeet()]})).on('error', util.log)
         .pipe(gulp.dest('static'));
 });
 
