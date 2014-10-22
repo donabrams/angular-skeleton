@@ -1,7 +1,8 @@
 Dependencies
 ============
-1) node/npm installed
-2) git command line tools installed
+ 1. node/npm installed
+ 2. git command line tools installed
+
 Use
 ===
 ```
