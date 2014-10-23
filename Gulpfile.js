@@ -77,10 +77,10 @@ gulp.task('pull-vendor-deps', function () {
 gulp.task('update-vendor-deps', ['pull-vendor-deps'], function () {
     //TODO: unload and reload bower_files due to bug in plugin.
     var bowerFiles = bower_files();
-    gulp.src((bowerFiles.js || [])
+    gulp.src(bowerFiles.js || [])
         .pipe(concat('vendor.js'))
         .pipe(gulp.dest('static'));
-    gulp.src((bowerFiles.css || [])
+    gulp.src(bowerFiles.css || [])
         .pipe(concat('vendor.css'))
         .pipe(gulp.dest('static'));
 });
