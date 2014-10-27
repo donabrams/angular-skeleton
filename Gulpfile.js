@@ -8,103 +8,135 @@ var gulp = require('gulp'),
     bower = require('bower'),
     concat = require('gulp-concat'),
     bower_files = require('bower-files'),
-    jeet = require('jeet');
+    jeet = require('jeet'),
+    uglify = require('gulp-uglify'),
+    minifyCss = require('gulp-minify-css'),
+    htmlReplace = require('gulp-html-replace'),
+    ngTemplateCache = require('gulp-angular-templatecache'),
+    gulpif = require('gulp-if'),
+    gulpFilter = require('gulp-filter'),
+    debug = require('gulp-debug'),
+    useref = require('gulp-useref'),
+    jshint = require('gulp-jshint'),
+    wrap = require('gulp-wrap'),
+    del = require('del'),
+    changed = require('gulp-changed'),
+    map = require('map-stream')
+    _ = require('lodash');
 
 var paths = {
-    main: ['app.js'],
-    static_files: ['static/**/*'],
-    html_templates: ['html/**/*.jade'],
-    html_files: ['html/**/*.html'],
-    css_templates: ['css/**/*.styl'],
-    css_files: ['css/**/*.css'],
-    js_templates: ['js/**/*.coffee'],
-    js_files: ['js/**/*.js'],
+    module_name: 'myapp',
+    server_main: ['server.js'],
     bower: ['bower.json'],
-    image_files: ['images/*']
+    dev_src: ['app/**/*', 'assets/**/*', 'index.html', 'index.jade'],
+    dev_target: 'dev_target',
+    prod_target: 'target'
 };
 
-gulp.task('server', function () {
-    //start the server at the beginning of the task
-    server.run();
+var stylus_libs = [nib(), jeet()];
 
-    //restart the server when file changes
-    gulp.watch(paths.static_files, server.notify);
-    gulp.watch(paths.main, [server.run]);
+gulp.task('lint', function() {
+    return gulp.src(paths.dev_src)
+        .pipe(gulpFilter('*.js')) 
+        .pipe(jshint())
+        .pipe(jshint.reporter('default'))
+        .pipe(jshint.reporter('fail'));
 });
 
-gulp.task('compile_html_templates', function () {
-    gulp.src(paths.html_templates)
-        .pipe(jade()).on('error', util.log)
-        .pipe(gulp.dest('static'));
-});
-
-gulp.task('compile_css_templates', function () {
-    gulp.src(paths.css_templates)
-        .pipe(stylus({use: [nib(), jeet()]})).on('error', util.log)
-        .pipe(gulp.dest('static'));
-});
-
-gulp.task('compile_js_templates', function () {
-    gulp.src(paths.js_templates)
-        .pipe(coffee()).on('error', util.log)
-        .pipe(gulp.dest('static'));
-});
-
-gulp.task('copy_html_files', function () {
-    gulp.src(paths.html_files)
-        .pipe(gulp.dest('static'));
-});
-
-gulp.task('copy_css_files', function () {
-    gulp.src(paths.css_files)
-        .pipe(gulp.dest('static'));
-});
-
-gulp.task('copy_js_files', function () {
-    gulp.src(paths.js_files)
-        .pipe(gulp.dest('static'));
-});
-
-gulp.task('copy_image_files', function () {
-    gulp.src(paths.image_files)
-        .pipe(gulp.dest('static'));
-});
-
-gulp.task('pull-vendor-deps', function () {
+gulp.task('pull_vendor_deps', function () {
     return bower.commands.install();
 });
 
-gulp.task('update-vendor-deps', ['pull-vendor-deps'], function () {
-    //TODO: unload and reload bower_files due to bug in plugin.
-    var bowerFiles = bower_files();
-    gulp.src(bowerFiles.js || [])
-        .pipe(concat('vendor.js'))
-        .pipe(gulp.dest('static'));
-    gulp.src(bowerFiles.css || [])
-        .pipe(concat('vendor.css'))
-        .pipe(gulp.dest('static'));
+gulp.task('clean_dev', function(cb) {
+    del([paths.dev_target + '/**'], cb);
 });
 
-gulp.task('watch', function() {
-    gulp.watch(paths.html_templates, ['compile_html_templates']);
-    gulp.watch(paths.css_templates, ['compile_css_templates']);
-    gulp.watch(paths.js_templates, ['compile_js_templates']);
-    gulp.watch(paths.html_files, ['copy_html_files']);
-    gulp.watch(paths.css_files, ['copy_css_files']);
-    gulp.watch(paths.js_files, ['copy_js_files']);
-    gulp.watch(paths.image_files, ['copy_image_files']);
-    gulp.watch(paths.bower, ['update-vendor-deps']);
+gulp.task('src_to_dev', ['clean_dev'], function() {
+    var templateFilter = gulpFilter('app/**/*.html')
+    return gulp.src('**/*')
+        .pipe(gulpFilter(paths.dev_src))
+        .pipe(gulpif('*.coffee', coffee()))
+        .pipe(gulpif('*.jade', jade()))
+        .pipe(gulpif('*.styl', stylus({use: stylus_libs})))
+        .pipe(templateFilter)
+        .pipe(ngTemplateCache({module: paths.module_name}))
+        .pipe(templateFilter.restore())
+        .on('error', util.log)
+        .pipe(gulp.dest(paths.dev_target));
+});
+
+gulp.task('dev_ready', ['src_to_dev', 'pull_vendor_deps']);
+
+gulp.task('server', ['dev_ready'], function () {
+    //start the server at the beginning of the task
+    server.run({
+        file: 'server.js'
+    });
+
+    // notify server when files changes
+    gulp.watch(paths.dev_target + '/**/*', server.notify);
+    gulp.watch(paths.prod_target + '/**/*', server.notify);
+    gulp.watch('bower_components' + '/**/*', server.notify);
+    // restart the server when server changes
+    gulp.watch(paths.server_main, [server.run]);
+});
+
+gulp.task('dev_build', [
+    'lint',
+    'dev_ready'
+]);
+
+gulp.task('clean_prod', function(cb) {
+    del([paths.prod_target + '/**'], cb);
+});
+
+gulp.task('dev_to_prod', ['dev_build'], function() {
+    var assets = useref.assets({
+        addNotConcat: true, 
+        searchPath: [paths.dev_target, '.']
+    });
+    var jsFilter = gulpFilter(['*.js', '!*.min.js']);
+    var cssFilter = gulpFilter('*.css');
+    return gulp.src(paths.dev_target + '/index.html')
+        .pipe(assets)
+
+        .pipe(jsFilter)
+        .pipe(uglify())
+        .pipe(wrap('(function(){\n"use strict";\n<%= contents %>\n})();'))
+        .pipe(concat('main.js'))
+        .pipe(jsFilter.restore())
+
+        .pipe(cssFilter)
+        .pipe(concat('main.css'))
+        .pipe(minifyCss())
+        .pipe(cssFilter.restore())
+
+        .pipe(assets.restore())
+        .pipe(useref())
+        .pipe(gulp.dest(paths.prod_target))
+        .on('error', util.log);
+});
+
+gulp.task('copy_images', ['clean_prod'], function() {
+    return gulp.src('assets/images/**/*')
+        .pipe(gulp.dest(paths.prod_target + '/images'));
 });
 
 gulp.task('build', [
-    'update-vendor-deps', 
-    'compile_html_templates', 
-    'compile_css_templates', 
-    'compile_js_templates', 
-    'copy_html_files',
-    'copy_css_files',
-    'copy_js_files',
-    'copy_image_files'
+    'clean_prod',
+    'dev_to_prod',
+    'copy_images'
 ]);
 
-gulp.task('default', ['server', 'watch']);
+gulp.task('dev_watch', function() {
+    gulp.watch(paths.bower, ['pull_vendor_deps']);
+    gulp.watch('index.html', ['src_to_dev']);
+    gulp.watch('app/**/*', ['src_to_dev']);
+    gulp.watch('assets/**/*', ['src_to_dev']);
+});
+
+gulp.task('dev', ['server', 'dev_watch', 'dev_ready']);
+
+gulp.task('clean', ['clean_prod', 'clean_dev']);
+
+gulp.task('default', ['dev']);

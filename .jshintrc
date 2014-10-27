@@ -1,0 +1,5 @@
+{
+    "latedef" : false,
+    "indent" : 4,
+    "predef" : ["angular"]
+}
