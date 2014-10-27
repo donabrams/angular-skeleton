@@ -1,10 +1,17 @@
+Angular Skeleton
+================
+
+This should be a nice starting point for developing angular libs.
+
 Dependencies
 ============
+
  1. node/npm installed
  2. git command line tools installed
 
 Use
 ===
+
 ```
   git clone git@gitlab.cardinalsolutions.com:dabrams/angular-skeleton.git $PROJECT_NAME
   cd $PROJECT_NAME
@@ -13,15 +20,16 @@ Use
   git add .
   git commit -m "Initial commit"
   npm install
-  gulp build
   gulp
+  #...
+  gulp build
   # goto http://localhost:8080/
 ```
 
 Structure
 =========
 
-Slightly modified from (http://scotch.io/tutorials/javascript/angularjs-best-practices-directory-structure).
+Slightly modified from [scotch.io](http://scotch.io/tutorials/javascript/angularjs-best-practices-directory-structure)
 
     app/
     ----- shared/   // acts as reusable components or partials of our site
