@@ -21,7 +21,7 @@ Use
 Structure
 =========
 
-Slightly modified from [http://scotch.io/tutorials/javascript/angularjs-best-practices-directory-structure]
+Slightly modified from (http://scotch.io/tutorials/javascript/angularjs-best-practices-directory-structure).
 
     app/
     ----- shared/   // acts as reusable components or partials of our site
