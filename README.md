@@ -1,7 +1,7 @@
 Angular Skeleton
 ================
 
-This should be a nice starting point for developing angular libs.
+This should be a nice starting point for developing angular apps.
 
 Dependencies
 ============
@@ -51,7 +51,7 @@ Slightly modified from [scotch.io](http://scotch.io/tutorials/javascript/angular
     ----- app.module.js
     ----- app.routes.js
     assets/
-    ----- img/      // Images and icons for your app
+    ----- images/      // Images and icons for your app
     ----- css/      // All styles and style related files (css & stylus files)
     ----- js/       // JavaScript files written for your app that are not for angular
     ----- libs/     // Third-party libraries such as jQuery, Moment, Underscore, etc.
