@@ -36,23 +36,35 @@ Slightly modified from [scotch.io](http://scotch.io/tutorials/javascript/angular
     ---------- sidebar/
     --------------- sidebarDirective.js
     --------------- sidebarView.html
+    --------------- sidebarView.css
     ---------- article/
     --------------- articleDirective.js
+    --------------- articleService.js
     --------------- articleView.html
+    --------------- articleView.css
+    ---------- httpServiceDecorator.js
+    ---------- user/
+    --------------- userService.js
+    ---------- login/
+    --------------- loginService.js
+    --------------- loginView.html
+    --------------- loginView.css
     ----- components/   // each component is treated as a mini Angular app
     ---------- home/
     --------------- homeController.js
     --------------- homeService.js
     --------------- homeView.html
+    --------------- homeView.css
     ---------- blog/
     --------------- blogController.js
-    --------------- blogService.js
-    --------------- blogView.html
+    --------------- blogService.coffee
+    --------------- blogView.jade
+    --------------- homeView.styl
     ----- app.module.js
     ----- app.routes.js
     assets/
-    ----- images/      // Images and icons for your app
-    ----- css/      // All styles and style related files (css & stylus files)
+    ----- images/   // Images and icons for your app
+    ----- css/      // Global styling and style related files (css & stylus files)
     ----- js/       // JavaScript files written for your app that are not for angular
     index.html      // Primary loading of all libraries/angular elements
     server.js       // Server (node app)
