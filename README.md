@@ -7,6 +7,12 @@ TLDR;
 =====
 
 ```
+  git clone git@github.com:donabrams/angular-skeleton.git $PROJECT_NAME
+  cd $PROJECT_NAME
+  rm -rf .git
+  git init
+  git add .
+  git commit -m "Initial commit"
   npm install
   gulp
   gulp dev
@@ -17,6 +23,8 @@ Dependencies
 
  1. node/npm installed
  2. git command line tools installed
+
+In windows, make sure you're using a 'Node command prompt'.
 
 Structure
 =========
