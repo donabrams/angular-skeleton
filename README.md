@@ -61,19 +61,45 @@ Slightly modified from [scotch.io](http://scotch.io/tutorials/javascript/angular
     bower.json      // Browser dependencies
     package.json    // Build & Server dependencies
 
-Prod Build Process
-==================
+How This Build System Assists You
+=================================
 
-The prod build process creates 3 files and one directory in /target:
- - main.js - concated dependencies in the same order as in index.html Angular templates will be inlined.
- - main.css - all css in one file
- - index.html - Single Page app file, scripts and css section will be replaced with reference to concated files
- - /images - all image resources
+1. By default, builds the app optimally for production
+------------------------------------------------------
+ - Compiles templateUrls into a templates.js file so html templates are precached.
+ - Compiles all js files into one main.js file and minimizes it.
+ - Compiles all css files into one main.css file and minimizes it.
+ - Compiles all images files into one images folder
+ - Alters index.html to include the main.js and main.css files
+ - This prod ready app is deployed to /target
 
-Dev Build Process
-=================
+2. Makes it easy to ensure code correctness when changes are made
+-----------------------------------------------------------------
+ - JsHint is required to pass before prod builds are created
+ - Tests are required to pass before prod builds are created
+ - JsHint and Tests are run when changes to js files during dev
+ - JsHint can be tweaked by altering .jshintrc
 
-During development (gulp dev), any changes in assets or bower.json will be copied to the /dev_target directory. Any angular html templates will be inlined.
+3. Makes it easy to add dependencies and pull them in
+-----------------------------------------------------
+ - devDependencies are added via npm/package.json
+    npm install some-dep --save-dev
+ - front-end dependencies are added via bower/bower.json
+    bower install some-dep --save
+ - back-end dependencies are added via npm/package.json
+    npm install some-dep --save
+ - for front-end, index.html contains all the scripts and css, in the order they will be concatenated, in a commented code block. This is annoying because you have to add a dependency twice, but this is the best way: I'd use bower main to pull in deps, but many bower packages have terrible main declarations so we can't trust them.
 
-Image references in css and html should be '/images/$IMAGE_NAME'
+4. Gives immediate feedback during dev
+--------------------------------------
+ The dev environment is started by using `gulp dev`. It:
+ - Sets up a server to serve both prod and dev (server.js). The server can be started without `gulp dev` with `node server.js`.
+ - Starts livereload and listens to changes to files in /dev_target. Note that it will not reload iframes.
+ - Compiles stylus, coffee, and jade templates on change and updates /dev-target (triggering reloads)
+ - Runs jsHint and tests, printing any errors to the console.
+ - Compiles html templates into templates.js (so you don't have suprises in prod)
+
+5. Is clear and easy to change
+------------------------------
+Well this is just a matter of opinion. See for yourself in Gulpfile.js.
 

@@ -11,7 +11,6 @@ var gulp = require('gulp'),
     jeet = require('jeet'),
     uglify = require('gulp-uglify'),
     minifyCss = require('gulp-minify-css'),
-    htmlReplace = require('gulp-html-replace'),
     ngTemplateCache = require('gulp-angular-templatecache'),
     gulpif = require('gulp-if'),
     gulpFilter = require('gulp-filter'),
@@ -24,16 +23,19 @@ var gulp = require('gulp'),
     map = require('map-stream')
     _ = require('lodash');
 
+var module_name = 'myapp';
 var paths = {
-    module_name: 'myapp',
     server_main: ['server.js'],
     bower: ['bower.json'],
-    dev_src: ['app/**/*', 'assets/**/*', 'index.html', 'index.jade'],
+    dev_src: ['app/**/*.*', 'assets/**/*.*', 'index.html', 'index.jade'],
     dev_target: 'dev_target',
     prod_target: 'target'
 };
-
 var stylus_libs = [nib(), jeet()];
+
+var iife = function() {
+    return wrap('(function(){\n"use strict";\n<%= contents %>\n})();');
+};
 
 gulp.task('lint', function() {
     return gulp.src(paths.dev_src)
@@ -58,11 +60,12 @@ gulp.task('src_to_dev', ['clean_dev'], function() {
         .pipe(gulpif('*.coffee', coffee()))
         .pipe(gulpif('*.jade', jade()))
         .pipe(gulpif('*.styl', stylus({use: stylus_libs})))
+        .pipe(gulpif('*.js', iife()))
         .pipe(templateFilter)
-        .pipe(ngTemplateCache({module: paths.module_name}))
+        .pipe(ngTemplateCache({module: module_name}))
         .pipe(templateFilter.restore())
-        .on('error', util.log)
-        .pipe(gulp.dest(paths.dev_target));
+        .pipe(gulp.dest(paths.dev_target))
+        .on('error', util.log);
 });
 
 gulp.task('dev_ready', ['src_to_dev', 'pull_vendor_deps']);
@@ -90,7 +93,7 @@ gulp.task('clean_prod', function(cb) {
     del([paths.prod_target + '/**'], cb);
 });
 
-gulp.task('dev_to_prod', ['dev_build'], function() {
+gulp.task('dev_to_prod', ['dev_build', 'clean_prod'], function() {
     var assets = useref.assets({
         addNotConcat: true, 
         searchPath: [paths.dev_target, '.']
@@ -102,7 +105,6 @@ gulp.task('dev_to_prod', ['dev_build'], function() {
 
         .pipe(jsFilter)
         .pipe(uglify())
-        .pipe(wrap('(function(){\n"use strict";\n<%= contents %>\n})();'))
         .pipe(concat('main.js'))
         .pipe(jsFilter.restore())
 
@@ -117,7 +119,7 @@ gulp.task('dev_to_prod', ['dev_build'], function() {
         .on('error', util.log);
 });
 
-gulp.task('copy_images', ['clean_prod'], function() {
+gulp.task('copy_images_to_prod', ['clean_prod'], function() {
     return gulp.src('assets/images/**/*')
         .pipe(gulp.dest(paths.prod_target + '/images'));
 });
@@ -125,7 +127,7 @@ gulp.task('copy_images', ['clean_prod'], function() {
 gulp.task('build', [
     'clean_prod',
     'dev_to_prod',
-    'copy_images'
+    'copy_images_to_prod'
 ]);
 
 gulp.task('dev_watch', function() {

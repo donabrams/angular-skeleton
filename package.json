@@ -25,7 +25,6 @@
     "gulp-debug": "*",
     "gulp-express": "donabrams/gulp-express",
     "gulp-filter": "*",
-    "gulp-html-replace": "*",
     "gulp-if": "*",
     "gulp-jade": "^0.7.0",
     "gulp-jshint": "*",
