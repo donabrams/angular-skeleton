@@ -83,17 +83,23 @@ How This Build System Assists You
 3. Makes it easy to add dependencies and pull them in
 -----------------------------------------------------
  - devDependencies are added via npm/package.json
+```
     npm install some-dep --save-dev
+```
  - front-end dependencies are added via bower/bower.json
+```
     bower install some-dep --save
+````
  - back-end dependencies are added via npm/package.json
+```
     npm install some-dep --save
+```
  - for front-end, index.html contains all the scripts and css, in the order they will be concatenated, in a commented code block. This is annoying because you have to add a dependency twice, but this is the best way: I'd use bower main to pull in deps, but many bower packages have terrible main declarations so we can't trust them.
 
 4. Gives immediate feedback during dev
 --------------------------------------
- The dev environment is started by using `gulp dev`. It:
- - Sets up a server to serve both prod and dev (server.js). The server can be started without `gulp dev` with `node server.js`.
+ The dev environment is started by using ```gulp dev```. It:
+ - Sets up a server to serve both prod and dev (server.js). The server can be started without gulp via ```node server.js```.
  - Starts livereload and listens to changes to files in /dev_target. Note that it will not reload iframes.
  - Compiles stylus, coffee, and jade templates on change and updates /dev-target (triggering reloads)
  - Runs jsHint and tests, printing any errors to the console.
