@@ -1,30 +1,22 @@
 Angular Skeleton
 ================
 
-This should be a nice starting point for developing angular apps.
+This should be a nice starting point for developing angular apps (front-end only).
+
+TLDR;
+=====
+
+```
+  npm install
+  gulp
+  gulp dev
+```
 
 Dependencies
 ============
 
  1. node/npm installed
  2. git command line tools installed
-
-Use
-===
-
-```
-  git clone git@gitlab.cardinalsolutions.com:dabrams/angular-skeleton.git $PROJECT_NAME
-  cd $PROJECT_NAME
-  rm -rf .git
-  git init
-  git add .
-  git commit -m "Initial commit"
-  npm install
-  gulp
-  #...
-  gulp build
-  # goto http://localhost:8080/
-```
 
 Structure
 =========
@@ -54,7 +46,6 @@ Slightly modified from [scotch.io](http://scotch.io/tutorials/javascript/angular
     ----- images/      // Images and icons for your app
     ----- css/      // All styles and style related files (css & stylus files)
     ----- js/       // JavaScript files written for your app that are not for angular
-    ----- libs/     // Third-party libraries such as jQuery, Moment, Underscore, etc.
     index.html      // Primary loading of all libraries/angular elements
     server.js       // Server (node app)
     Gulpfile.js     // Build configuration
@@ -66,6 +57,7 @@ How This Build System Assists You
 
 1. By default, builds the app optimally for production
 ------------------------------------------------------
+It's just ```gulp```. Which in turn:
  - Compiles templateUrls into a templates.js file so html templates are precached.
  - Compiles all js files into one main.js file and minimizes it.
  - Compiles all css files into one main.css file and minimizes it.
