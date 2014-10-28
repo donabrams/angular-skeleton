@@ -1,7 +1,11 @@
 var express = require('express');
+var compress = require('compression');
+var livereload = require('connect-livereload');
 var port = 8080;
 
 var app = express();
+app.use(compress());
+app.use(livereload());
 app.use('/dev/bower_components', express.static(__dirname + "/bower_components"));
 app.use('/dev/images', express.static(__dirname + "/assets/images"));
 app.use('/dev', express.static(__dirname + "/dev_target"));

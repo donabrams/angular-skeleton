@@ -1,144 +1,180 @@
 var gulp = require('gulp'),
-    server = require('gulp-express'),
-    util = require('gulp-util'),
-    jade = require('gulp-jade'),
-    stylus = require('gulp-stylus'),
-    nib = require('nib'),
-    coffee = require('gulp-coffee'),
+    plugins = require('gulp-load-plugins')(),
     bower = require('bower'),
-    concat = require('gulp-concat'),
-    bower_files = require('bower-files'),
-    jeet = require('jeet'),
-    uglify = require('gulp-uglify'),
-    minifyCss = require('gulp-minify-css'),
-    ngTemplateCache = require('gulp-angular-templatecache'),
-    gulpif = require('gulp-if'),
-    gulpFilter = require('gulp-filter'),
-    debug = require('gulp-debug'),
-    useref = require('gulp-useref'),
-    jshint = require('gulp-jshint'),
-    wrap = require('gulp-wrap'),
     del = require('del'),
-    changed = require('gulp-changed'),
-    map = require('map-stream')
-    _ = require('lodash');
+    nib = require('nib'),
+    jeet = require('jeet'),
+    _ = require('lodash'),
+    rs = require('run-sequence');
 
-var module_name = 'myapp';
+// Change this to change the module tamples are cached on
+var templates_module_name = 'myapp';
+// For convenience
 var paths = {
-    server_main: ['server.js'],
-    bower: ['bower.json'],
-    dev_src: ['app/**/*.*', 'assets/**/*.*', 'index.html', 'index.jade'],
     dev_target: 'dev_target',
-    prod_target: 'target'
+    prod_target: 'target',
+    server_main: ['server.js'],
+    bower_config: ['bower.json'],
+    bower_files: 'bower_components',
+    ng_templates: 'app/**/*.html',
+    img_src: 'assets/images',
+    dev_src: ['app/**/*.*', 'assets/**/*.*', 'index.html', 'index.jade']
 };
-var stylus_libs = [nib(), jeet()];
+// plugins that stylus uses
+var stylus_libs = [
+    nib(), // nib is like compass for sass
+    jeet() // jeet is an amazing responsive grid framework
+];
 
-var iife = function() {
-    return wrap('(function(){\n"use strict";\n<%= contents %>\n})();');
-};
-
+// Lint all the dev javascript
 gulp.task('lint', function() {
     return gulp.src(paths.dev_src)
-        .pipe(gulpFilter('*.js')) 
-        .pipe(jshint())
-        .pipe(jshint.reporter('default'))
-        .pipe(jshint.reporter('fail'));
+        .pipe(plugins.filter('**/*.js'))
+        .pipe(plugins.jshint())
+        .pipe(plugins.jshint.reporter('default'))
+        .pipe(plugins.jshint.reporter('fail'));
 });
 
+// Pull down bower dependencies
 gulp.task('pull_vendor_deps', function () {
     return bower.commands.install();
 });
 
+// Clear out the dev_target folder
 gulp.task('clean_dev', function(cb) {
     del([paths.dev_target + '/**'], cb);
 });
 
-gulp.task('src_to_dev', ['clean_dev'], function() {
-    var templateFilter = gulpFilter('app/**/*.html')
-    return gulp.src('**/*')
-        .pipe(gulpFilter(paths.dev_src))
-        .pipe(gulpif('*.coffee', coffee()))
-        .pipe(gulpif('*.jade', jade()))
-        .pipe(gulpif('*.styl', stylus({use: stylus_libs})))
-        .pipe(gulpif('*.js', iife()))
+// Main dev task:
+// 1. compiles coffeescript
+// 2. compiles jade
+// 3. compiles stylus 
+// 4. wraps js files in IIFEs
+// 5. creates the template cache from html files (Beware: may cache unused templates!)
+// 6. copies all files to /dev_target
+gulp.task('src_to_dev', function() {
+    var templateFilter = plugins.filter(paths.ng_templates)
+    return gulp.src(paths.dev_src)
+        .pipe(plugins.rebase(__dirname + '/'))
+        .pipe(plugins.if('*.coffee', plugins.coffee()))
+        .pipe(plugins.if('*.jade', plugins.jade()))
+        .pipe(plugins.if('*.styl', plugins.stylus({use: stylus_libs})))
+        .pipe(plugins.if('*.js', iife()))
         .pipe(templateFilter)
-        .pipe(ngTemplateCache({module: module_name}))
+        .pipe(plugins.angularTemplatecache({module: templates_module_name}))
         .pipe(templateFilter.restore())
         .pipe(gulp.dest(paths.dev_target))
-        .on('error', util.log);
+        .on('error', plugins.util.log);
 });
 
-gulp.task('dev_ready', ['src_to_dev', 'pull_vendor_deps']);
+// Helper gulp plugin that wraps a file in an IIFE (keeps modules apart)
+function iife() {
+    return plugins.wrap('(function(){\n"use strict";\n<%= contents %>\n})();');
+}
 
-gulp.task('server', ['dev_ready'], function () {
-    //start the server at the beginning of the task
-    server.run({
+// Start the server
+gulp.task('dev-server', function() {
+    plugins.express.run({
         file: 'server.js'
     });
-
     // notify server when files changes
-    gulp.watch(paths.dev_target + '/**/*', server.notify);
-    gulp.watch(paths.prod_target + '/**/*', server.notify);
-    gulp.watch('bower_components' + '/**/*', server.notify);
+    gulp.watch(paths.dev_target + '/**/*', plugins.express.notify);
+    gulp.watch(paths.prod_target + '/**/*', plugins.express.notify);
+    gulp.watch(paths.bower_files + '/**', plugins.express.notify);
+    gulp.watch(paths.dev_target, plugins.express.notify);
+    gulp.watch(paths.prod_target, plugins.express.notify);
+    gulp.watch(paths.bower_files, plugins.express.notify);
     // restart the server when server changes
-    gulp.watch(paths.server_main, [server.run]);
+    gulp.watch(paths.server_main, ['server-start']);
 });
+/*
+gulp.task('dev-server', function(cb) {
+    rs('server-start',
+        'server-watchers',
+        cb
+    );
+});
+*/
 
-gulp.task('dev_build', [
-    'lint',
-    'dev_ready'
-]);
-
+// Cleans target directory
 gulp.task('clean_prod', function(cb) {
     del([paths.prod_target + '/**'], cb);
 });
 
-gulp.task('dev_to_prod', ['dev_build', 'clean_prod'], function() {
-    var assets = useref.assets({
+// Main build task:
+// 1. Pull ordered list of css and js files from index.html
+// 2. uglify and concat all js resources into main.js
+// 3. concat and minify all css resources into main.css
+// 4. replace css and js blocks in index.html with main.{js,css}
+// 5. Copy all these files to /target
+gulp.task('dev_to_prod', function() {
+    var assets = plugins.useref.assets({
         addNotConcat: true, 
         searchPath: [paths.dev_target, '.']
     });
-    var jsFilter = gulpFilter(['*.js', '!*.min.js']);
-    var cssFilter = gulpFilter('*.css');
+    var jsFilter = plugins.filter(['*.js', '!*.min.js']);
+    var cssFilter = plugins.filter('*.css');
     return gulp.src(paths.dev_target + '/index.html')
         .pipe(assets)
 
         .pipe(jsFilter)
-        .pipe(uglify())
-        .pipe(concat('main.js'))
+        .pipe(plugins.concat('main.js'))
+        .pipe(plugins.uglify())
         .pipe(jsFilter.restore())
 
         .pipe(cssFilter)
-        .pipe(concat('main.css'))
-        .pipe(minifyCss())
+        .pipe(plugins.concat('main.css'))
+        .pipe(plugins.minifyCss())
         .pipe(cssFilter.restore())
 
         .pipe(assets.restore())
-        .pipe(useref())
+        .pipe(plugins.useref())
         .pipe(gulp.dest(paths.prod_target))
-        .on('error', util.log);
+        .on('error', plugins.util.log);
 });
 
-gulp.task('copy_images_to_prod', ['clean_prod'], function() {
-    return gulp.src('assets/images/**/*')
+// Copy image assets directory to /target
+gulp.task('copy_images_to_prod', function() {
+    return gulp.src(paths.img_src + '/**/*')
         .pipe(gulp.dest(paths.prod_target + '/images'));
 });
 
-gulp.task('build', [
-    'clean_prod',
-    'dev_to_prod',
-    'copy_images_to_prod'
-]);
-
-gulp.task('dev_watch', function() {
-    gulp.watch(paths.bower, ['pull_vendor_deps']);
-    gulp.watch('index.html', ['src_to_dev']);
-    gulp.watch('app/**/*', ['src_to_dev']);
-    gulp.watch('assets/**/*', ['src_to_dev']);
+// dev rebuild task
+gulp.task('rebuild_dev', function(cb) {
+    rs(['clean_dev'],
+        ['src_to_dev', 'pull_vendor_deps'],
+        cb
+    );
 });
 
-gulp.task('dev', ['server', 'dev_watch', 'dev_ready']);
+// main build task
+gulp.task('build', function(cb) {
+    rs(['clean_prod', 'rebuild_dev'],
+        ['dev_to_prod', 'copy_images_to_prod'],
+        cb
+    );
+});
+// rebuild === build
+gulp.task('rebuild', ['build']);
 
+// watches for dev
+gulp.task('dev_watch', function() {
+    gulp.watch(paths.bower_config, ['pull_vendor_deps']);
+    _.each(paths.dev_src, function(path) {
+        gulp.watch(path, ['src_to_dev', 'lint']);
+    });
+});
+
+// dev task
+gulp.task('dev', function(cb) {
+    rs('rebuild_dev',
+        ['dev-server', 'dev_watch'],
+        cb
+    );
+});
+
+// clean everything
 gulp.task('clean', ['clean_prod', 'clean_dev']);
 
-gulp.task('default', ['dev']);
+// default is BUILD
+gulp.task('default', ['build']);
