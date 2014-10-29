@@ -45,6 +45,11 @@ gulp.task('clean_dev', function(cb) {
     del([paths.dev_target + '/**'], cb);
 });
 
+function handleErr(err) {
+    plugins.util.log(err);
+    this.emit('end');
+}
+
 // Main dev task:
 // 1. compiles coffeescript
 // 2. compiles jade
@@ -53,18 +58,30 @@ gulp.task('clean_dev', function(cb) {
 // 5. creates the template cache from html files (Beware: may cache unused templates!)
 // 6. copies all files to /dev_target
 gulp.task('src_to_dev', function() {
-    var templateFilter = plugins.filter(paths.ng_templates)
+    var jadeFilter = plugins.filter('**/*.jade');
+    var stylFilter = plugins.filter('**/*.styl');
+    var coffeeFilter = plugins.filter('**/*.coffee');
+    var jsFilter = plugins.filter('**/*.js');
+    var templateFilter = plugins.filter(paths.ng_templates);
     return gulp.src(paths.dev_src)
+        .pipe(plugins.plumber({errorHandler: handleErr}))
         .pipe(plugins.rebase(__dirname + '/'))
-        .pipe(plugins.if('*.coffee', plugins.coffee()))
-        .pipe(plugins.if('*.jade', plugins.jade()))
-        .pipe(plugins.if('*.styl', plugins.stylus({use: stylus_libs})))
-        .pipe(plugins.if('*.js', iife()))
+        .pipe(jadeFilter)
+        .pipe(plugins.jade())
+        .pipe(jadeFilter.restore())
+        .pipe(stylFilter)
+        .pipe(plugins.stylus({use: stylus_libs}))
+        .pipe(stylFilter.restore())
+        .pipe(coffeeFilter)
+        .pipe(plugins.coffee())
+        .pipe(coffeeFilter.restore())
         .pipe(templateFilter)
         .pipe(plugins.angularTemplatecache({module: templates_module_name}))
         .pipe(templateFilter.restore())
-        .pipe(gulp.dest(paths.dev_target))
-        .on('error', plugins.util.log);
+        .pipe(jsFilter)
+        .pipe(iife())
+        .pipe(jsFilter.restore())
+        .pipe(gulp.dest(paths.dev_target));
 });
 
 // Helper gulp plugin that wraps a file in an IIFE (keeps modules apart)
