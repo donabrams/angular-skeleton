@@ -9,11 +9,11 @@ TLDR;
 ```
   git clone git@github.com:donabrams/angular-skeleton.git $PROJECT_NAME
   cd $PROJECT_NAME
-  rm -rf .git
+  rm -rf .git # 'rd /s .git' on windows
   git init
   git add .
   git commit -m "Initial commit"
-  npm install
+  npm install # You may have to run this twice on windows
   gulp
   gulp dev
 ```
