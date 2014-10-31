@@ -89,11 +89,14 @@ function iife() {
     return plugins.wrap('(function(){\n"use strict";\n<%= contents %>\n})();');
 }
 
-// Start the server
-gulp.task('dev-server', function() {
+gulp.task('start_server', function() {
     plugins.express.run({
         file: 'server.js'
     });
+})
+
+// Start the server
+gulp.task('dev_server', ['start_server'], function() {
     // notify server when files changes
     gulp.watch(paths.dev_target + '/**/*', plugins.express.notify);
     gulp.watch(paths.prod_target + '/**/*', plugins.express.notify);
@@ -102,7 +105,7 @@ gulp.task('dev-server', function() {
     gulp.watch(paths.prod_target, plugins.express.notify);
     gulp.watch(paths.bower_files, plugins.express.notify);
     // restart the server when server changes
-    gulp.watch(paths.server_main, ['server-start']);
+    gulp.watch(paths.server_main, ['start_server']);
 });
 /*
 gulp.task('dev-server', function(cb) {
@@ -132,6 +135,7 @@ gulp.task('dev_to_prod', function() {
     var jsFilter = plugins.filter(['*.js', '!*.min.js']);
     var cssFilter = plugins.filter('*.css');
     return gulp.src(paths.dev_target + '/index.html')
+        .pipe(plugins.plumber({errorHandler: handleErr}))
         .pipe(assets)
 
         .pipe(jsFilter)
@@ -147,7 +151,6 @@ gulp.task('dev_to_prod', function() {
         .pipe(assets.restore())
         .pipe(plugins.useref())
         .pipe(gulp.dest(paths.prod_target))
-        .on('error', plugins.util.log);
 });
 
 // Copy image assets directory to /target
@@ -185,7 +188,7 @@ gulp.task('dev_watch', function() {
 // dev task
 gulp.task('dev', function(cb) {
     rs('rebuild_dev',
-        ['dev-server', 'dev_watch'],
+        ['dev_server', 'dev_watch'],
         cb
     );
 });
