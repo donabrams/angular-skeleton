@@ -7,8 +7,10 @@ TLDR;
 =====
 
 ```
-  git clone git@github.com:donabrams/angular-skeleton.git $PROJECT_NAME
-  cd $PROJECT_NAME
+  git clone git@github.com:donabrams/angular-skeleton.git PROJECT_NAME
+  # If you have problems with the above try this:
+  # git clone https://github.com/donabrams/angular-skeleton.git PROJECT_NAME
+  cd PROJECT_NAME
   rm -rf .git # 'rd /s .git' on windows
   git init
   git add .
