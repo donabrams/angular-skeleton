@@ -134,8 +134,18 @@ gulp.task('dev_to_prod', function() {
     });
     var jsFilter = plugins.filter(['*.js', '!*.min.js']);
     var cssFilter = plugins.filter('*.css');
-    return gulp.src(paths.dev_target + '/index.html')
+    var jadeFilter = plugins.filter('**/*.jade');
+    return gulp.src(['index.html', 'index.jade'])
         .pipe(plugins.plumber({errorHandler: handleErr}))
+        
+        // WORKAROUND: Useref needs links and scripts on newlines or it fails,
+        // so pretty compile index.html from source when using jade
+        .pipe(jadeFilter)
+        .pipe(plugins.jade({
+            pretty: true
+        }))
+        .pipe(jadeFilter.restore())
+
         .pipe(assets)
 
         .pipe(jsFilter)
