@@ -15,4 +15,4 @@ app.get('/', function(req, res) {
     res.send('<a href="/dev">dev</a> | <a href="/prod">prod</a>');
 });
 app.listen(port);
-console.log('TODO listening on port ' + 8080);
+console.log('TODO listening on port ' + port);
