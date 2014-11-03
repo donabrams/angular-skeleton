@@ -16,7 +16,7 @@ TLDR;
   git add .
   git commit -m "Initial commit"
   npm install # You may have to run this twice on windows
-  gulp
+  gulp # You may need to run './node_modules/.bin/gulp' if .bin is not in your $PATH
   gulp dev
 ```
 
