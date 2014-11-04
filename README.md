@@ -62,12 +62,13 @@ Slightly modified from [scotch.io](http://scotch.io/tutorials/javascript/angular
     --------------- blogService.coffee
     --------------- blogView.jade
     --------------- homeView.styl
-    ----- app.module.js
+    ----- app.modules.js
     ----- app.routes.js
     assets/
     ----- images/   // Images and icons for your app
     ----- css/      // Global styling and style related files (css & stylus files)
     ----- js/       // JavaScript files written for your app that are not for angular
+    ----- html/     // Html files not for templates
     index.html      // Primary loading of all libraries/angular elements
     server.js       // Server (node app)
     Gulpfile.js     // Build configuration

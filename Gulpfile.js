@@ -18,6 +18,7 @@ var paths = {
     bower_files: 'bower_components',
     ng_templates: 'app/**/*.html',
     img_src: 'assets/images',
+    html_src: 'dev_target/assets/html',
     dev_src: ['app/**/*.*', 'assets/**/*.*', 'index.html', 'index.jade']
 };
 // plugins that stylus uses
@@ -167,6 +168,12 @@ gulp.task('dev_to_prod', function() {
 gulp.task('copy_images_to_prod', function() {
     return gulp.src(paths.img_src + '/**/*')
         .pipe(gulp.dest(paths.prod_target + '/images'));
+});
+// Copy html assets not used in templates to prod
+// TODO: this could use rethinking
+gulp.task('copy_html_to_prod', function() {
+    return gulp.src(paths.html_src + '/**/*')
+        .pipe(gulp.dest(paths.prod_target + '/assets/html'));
 });
 
 // dev rebuild task
